@@ -7,6 +7,7 @@ rule calculate_metrics:
         ref = REF
     output:
         aln_sum = "Align/gatk_metrics_{id}.alignment_summary_metrics",
+        insert_size = "Align/gatk_metrics_{id}.insert_size_metrics"
     threads:
         config['threads']['metrics']
     params:
@@ -21,7 +22,17 @@ rule calculate_metrics:
             "--PROGRAM CollectInsertSizeMetrics "
             "-O Align/gatk_metrics_{wildcards.id}"
 
-
+rule qc_data_drift:
+    input:
+        sample    = "Align/gatk_metrics_{id}.insert_size_metrics",
+        benchmark = config['params']['benchmark_insert_size']
+    output:
+        plot   = "QC/insert_size_drift.png",
+        report = "QC/insert_size_drift.txt"
+    shell:
+        "python3 {params.src_dir}/modules/shared/metrics/qc_data_drift.py "
+        "--sample {input.sample} --benchmark {input.benchmark} --out QC/insert_size_drift"
+        
 # This runs an analysis of duplicates
 rule duplicate_analysis:
     input:

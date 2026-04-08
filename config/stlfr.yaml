@@ -101,6 +101,8 @@ params:
     hisat2_index: "/path/to/hisat2_index"
     hisat2_splicesites: "/path/to/splicesites.txt"
 
+    # QC parameters
+    benchmark_insert_size: "/path/to/benchmark_insert_size.txt"
 calc_frag:
     ########### start fill ###
     # stLFR defaults: minreads=4, mapping_quality=30

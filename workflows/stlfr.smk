@@ -60,6 +60,7 @@ def run_all_input(wildcards):
             run_all_files.extend(['Align/mapped_uniq_bc_bases_count.txt'])
         run_all_files.extend([
                         "summary_report.txt",
+                        "QC/insert_size_drift.png",
                         "Align/{}_dedup_metrics2.txt".format(config['samples']['id']),
                         "Align/flagstat_metric.txt",
                         "Align/gatk_metrics_{}.alignment_summary_metrics".format(config['samples']['id'])])
