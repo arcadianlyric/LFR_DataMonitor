@@ -17,6 +17,8 @@ rule calculate_metrics:
         "{params.gatk_install} CollectMultipleMetrics "
             "-R {input.ref} "
             "-I {input.bam} "
+            "--PROGRAM QualityScoreDistribution "
+            "--PROGRAM CollectInsertSizeMetrics "
             "-O Align/gatk_metrics_{wildcards.id}"
 
 
