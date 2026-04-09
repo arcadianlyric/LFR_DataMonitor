@@ -5,7 +5,7 @@ For production pipeline, see [cWGS](https://github.com/Complete-Genomics/DNBSEQ_
 
 ## Background and Impact
 
-MGI stLFR/cLFR co-barcodes short reads with UMI, achieving pseudo-long-read resolution through UMI-based fragment clustering at standard short-read cost. This makes it attractive for production-scale WGS, but it also introduces additional failure modes: library preparation drift, UMI synthesis quality, and sequencing chemistry variation can all silently degrade data quality before reaching variant calling.
+MGI stLFR/cLFR co-barcodes short reads with UMI, achieving pseudo-long-read resolution through UMI-based fragment clustering at standard short-read cost. This makes it attractive for production-scale WGS, but it also introduces additional failure modes: library preparation drift, UMI synthesis quality, and sequencing chemistry variation can all silently degrade data quality before reaching variant calling. Once data drift found, it can be used to trigger retraining of ML models like DeepVariant:[GoogleDeepVariant_FineTuning](https://github.com/arcadianlyric/GoogleDeepVariant_FineTuning). 
 
 **Why data drift monitoring matters for ML-based variant calling.**
 Downstream variant callers such as [Google DeepVariant](https://github.com/google/deepvariant) are deep learning models trained on specific distributions of read pileup features — GC content, coverage depth, duplicate rate, and fragment size. When the input data distribution shifts (assay lot change, reagent update, instrument recalibration), the model operates out-of-distribution, leading to degraded precision/recall without any obvious error signal at the call level.
