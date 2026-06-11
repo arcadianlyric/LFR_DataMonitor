@@ -1,6 +1,6 @@
 # CGI LFR 测序数据质控与分析流程
 
-本流程适用于 CGI LFR 技术（stLFR：单管长片段读取；cLFR：Complete LFR）的各类 DNA 测序应用，重点关注**数据漂移质控/清洗/测序方案开发中的问题排查**。
+本[流程](https://github.com/Complete-Genomics/LFR_Pipeline)适用于 CGI LFR 技术（stLFR：单管长片段读取；cLFR：Complete LFR）的各类 DNA 测序应用，重点关注**数据漂移质控/清洗/测序方案开发中的问题排查**。
 生产环境流程请参见 [cWGS](https://github.com/Complete-Genomics/DNBSEQ_Complete_WGS/tree/test?tab=readme-ov-file)。
 
 ---
@@ -74,9 +74,22 @@ MGI stLFR/cLFR 技术通过UMI(条码)对短读长数据进行标记，实现基
 
 ### 已实现
 - **运行级质控特征矩阵** — `summary_report.py` 汇总每次运行的指标向量（片段 N50、GC 偏好系数、重复率、UMI利用率），可作为下游建模特征值。
+- **自动重训的 agentic 触发器** — `qc_data_drift.py` 在片段插入长度漂移检测后执行一个轻量 Monitor → Evaluator → Retrainer 闭环。它会写出 `QC/agentic_retrain_decision.json`，用 `QC/agentic_retrain_history.jsonl` 记录冷却时间，并可在显著漂移时执行配置好的重训命令。
+
+在 `config/stlfr.yaml` 或 `config/clfr.yaml` 中开启：
+
+```yaml
+agentic_retrain:
+    enabled: True
+    command: "bash /path/to/deepvariant_finetune.sh"
+    cooldown_seconds: 86400
+    min_ks_statistic: 0.1
+```
+
+重训命令会收到这些环境变量：`LFR_DRIFT_REPORT`、`LFR_DRIFT_KS_STATISTIC`、`LFR_DRIFT_PVALUE`、`LFR_DRIFT_PVALUE_THRESHOLD`、`LFR_DRIFT_DETECTED`。
 
 ### 进行中
-- **自适应漂移检测与自动微调** (`ml/agentic_finetune/`) — 端到端闭环系统：当漂移检测器（基于运行级质控特征矩阵的 MMD/CUSUM 检验）判定输入数据分布已偏离 DeepVariant 训练分布时，自动触发模型微调流程。整体架构分为三个阶段：
+- **自适应多变量漂移检测与自动微调** (`ml/agentic_finetune/`) — 当前插入片段长度触发器的后续扩展：当漂移检测器（基于运行级质控特征矩阵的 MMD/CUSUM 检验）判定输入数据分布已偏离 DeepVariant 训练分布时，自动触发模型微调流程。整体架构分为三个阶段：
   1. **漂移判定**：对最近 N 次运行的质控向量进行滑动窗口 MMD 检验；当 p-value 低于阈值时标记漂移事件，并输出漂移方向（GC 偏移、片段长度漂移、重复率异常等）的特征归因。
   2. **Agentic 决策**：基于 LLM agent 的决策层评估漂移严重程度与历史微调记录，决定动作——跳过（噪声波动）、仅告警（轻度漂移）、或触发微调（显著漂移）。决策依据包括：漂移幅度、受影响指标类型、距上次微调的间隔、当前可用标注数据量。
   3. **自动微调**：按照 DeepVariant [training case study](https://github.com/IntelLabs/open-omics-deepvariant/blob/r1.5/docs/deepvariant-training-case-study.md) 的 transfer learning 方法，从预训练 WGS 模型出发，在漂移分布数据上执行 `make_examples`（基于 GIAB 基准集按染色体划分 train/val/test）→ shuffle → `model_train`（inception_v3 微调）→ `model_eval` 流程；在验证集（chr21）上持续评估 checkpoint，选取最优模型，仅当测试集（chr20）F1 优于当前生产模型时才部署。

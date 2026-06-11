@@ -1,6 +1,6 @@
 # CGI LFR Pipeline
  
-This pipeline is for various CGI LFR (stLFR: Single Tube Long Fragment Read and cLFR: Complete LFR) DNA sequencing applications, with a focus on data drift QC, data cleaning and assay development troubleshooting.   
+This [LFR pipeline](https://github.com/Complete-Genomics/LFR_Pipeline) is for various CGI LFR (stLFR: Single Tube Long Fragment Read and cLFR: Complete LFR) DNA sequencing applications, with a focus on data drift QC, data cleaning and assay development troubleshooting.   
 For production pipeline, see [cWGS](https://github.com/Complete-Genomics/DNBSEQ_Complete_WGS/tree/test?tab=readme-ov-file).  
 
 ## Background and Impact
@@ -23,6 +23,8 @@ This pipeline computes a structured set of QC metrics per run to detect such dri
 | Alignment rate, mismatch rate | Reference compatibility, adapter contamination |
 
 These metrics serve a dual purpose: **operational QC** (flag runs before they enter the variant calling queue) and **feature engineering** (input features for a drift detector or an agentic trigger for automated DeepVariant fine-tuning on freshly labelled data from the drifted distribution).
+
+![insert_size_drift](img/insert_size_drift.png)
 
 **Multi-stage data cleaning**
 Raw sequencing data contains multiple sources of noise that must be systematically removed before any downstream analysis or ML modelling. The pipeline implements a layered cleaning strategy that mirrors standard ML data preprocessing:
